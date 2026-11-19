@@ -15,6 +15,7 @@ from .apps import App, list_installed_apps, run_uninstaller
 from .caches import scan_caches, scan_projects
 from .common import CHECK, IS_WINDOWS, SAFE, Item, human_size
 from .leftovers import find_leftovers, find_orphans, find_registry_leftovers
+from .permissions import allowed, needs_setup
 from .trash import IgnoreList, Result, app_data_dir, is_admin, recycle, relaunch_as_admin
 
 BOX_ON, BOX_OFF = "☑", "☐"
@@ -155,9 +156,33 @@ class WinnowApp(tk.Tk):
         self.status.pack(side="left")
         if IS_WINDOWS and not is_admin():
             ttk.Button(bar, text="Restart as administrator", command=self._elevate).pack(side="right")
+        ttk.Button(bar, text="Settings\u2026", command=lambda: self.open_setup(first_run=False)).pack(side="right", padx=6)
 
         self.after(100, self._poll)
-        self.load_apps()
+        if needs_setup(self.settings.data):
+            self.after(50, lambda: self.open_setup(first_run=True))
+        else:
+            self.load_apps()
+
+    # ------------------------------------------------------------ setup
+
+    def can(self, key: str) -> bool:
+        return allowed(self.settings.data, key)
+
+    def open_setup(self, first_run: bool):
+        from .setup_wizard import SetupWizard
+
+        def done(_):
+            self.settings.save()
+            self.clean_list.set_items([])
+            self.load_apps()
+
+        def cancel():
+            if needs_setup(self.settings.data):
+                # Setup was never finished: nothing is allowed, so close.
+                self.destroy()
+
+        SetupWizard(self, self.settings.data, done, cancel)
 
     # ------------------------------------------------------------ threading
 
@@ -215,6 +240,12 @@ class WinnowApp(tk.Tk):
         return f
 
     def load_apps(self):
+        if not self.can("read_apps"):
+            self.installed = []
+            self._fill_apps()
+            self.status.config(text="Reading installed apps is turned off. Turn it on in Settings.")
+            return
+
         def done(apps):
             self.installed = apps
             self._fill_apps()
@@ -238,6 +269,7 @@ class WinnowApp(tk.Tk):
             messagebox.showinfo("Winnow", "Select an app first.")
             return
         app = self.installed[int(sel)]
+        look_files, look_registry = self.can("scan_leftovers"), self.can("registry_cleanup")
         if not messagebox.askyesno("Uninstall", f"Run the uninstaller for {app.name}?\n\n"
                                    "Its own uninstaller opens first. Afterwards Winnow looks for files "
                                    "it left behind, and shows them before moving anything."):
@@ -247,7 +279,8 @@ class WinnowApp(tk.Tk):
             code = run_uninstaller(app)
             remaining = list_installed_apps()
             gone = not any(a.key_name == app.key_name and a.norm == app.norm for a in remaining)
-            items = find_leftovers(app, remaining) + find_registry_leftovers(app, remaining)
+            items = (find_leftovers(app, remaining) if look_files else []) + \
+                (find_registry_leftovers(app, remaining) if look_registry else [])
             items = [i for i in items if not self.ignore.contains(i.path)]
             return code, gone, remaining, items
 
@@ -314,6 +347,10 @@ class WinnowApp(tk.Tk):
         self.total.config(text=f"{len(ticked)} ticked, {human_size(sum(i.size for i in ticked))}")
 
     def edit_project_roots(self):
+        if not self.can("scan_projects"):
+            messagebox.showinfo("Project folders", "Looking in project folders is turned off. "
+                                "Turn it on in Settings.")
+            return
         roots = self.settings.data["project_roots"]
         msg = "Winnow looks for node_modules, build and cache folders in projects inside these folders:\n\n" + \
               ("\n".join(roots) if roots else "(none yet)") + "\n\nAdd a folder?"
@@ -329,10 +366,21 @@ class WinnowApp(tk.Tk):
     def scan(self):
         roots = list(self.settings.data["project_roots"])
         age = self.settings.data["project_age_days"]
+        do_caches, do_projects = self.can("scan_caches"), self.can("scan_projects")
+        # Unused app data is only judged against the installed-app list.
+        do_orphans = self.can("scan_leftovers") and self.can("read_apps")
+        if not (do_caches or do_projects or do_orphans):
+            messagebox.showinfo("Winnow", "All scans are turned off. Turn some on in Settings.")
+            return
 
         def work():
-            installed = self.installed or list_installed_apps()
-            items = scan_caches() + scan_projects(roots, min_age_days=age) + find_orphans(installed)
+            items = []
+            if do_caches:
+                items += scan_caches()
+            if do_projects:
+                items += scan_projects(roots, min_age_days=age)
+            if do_orphans:
+                items += find_orphans(self.installed or list_installed_apps())
             return [i for i in items if not self.ignore.contains(i.path)]
 
         def done(items):

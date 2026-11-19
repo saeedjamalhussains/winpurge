@@ -195,5 +195,40 @@ class TestIgnore(FakePC):
         self.assertFalse(ig2.contains("C:\\Y"))
 
 
+class TestPermissions(unittest.TestCase):
+    def test_nothing_allowed_before_setup(self):
+        from winnow.permissions import PERMISSIONS, allowed, needs_setup
+        self.assertTrue(needs_setup({}))
+        for p in PERMISSIONS:
+            self.assertFalse(allowed({}, p.key))
+
+    def test_choices_saved_and_project_roots_dropped_when_off(self):
+        from winnow.permissions import allowed, complete_setup, needs_setup
+        s = complete_setup({}, {"scan_caches": False, "scan_projects": False}, ["C:\\code"])
+        self.assertFalse(needs_setup(s))
+        self.assertTrue(allowed(s, "read_apps"))       # default on
+        self.assertFalse(allowed(s, "scan_caches"))     # turned off
+        self.assertFalse(allowed(s, "registry_cleanup"))  # default off
+        self.assertEqual(s["project_roots"], [])
+
+    def test_unknown_permission_rejected(self):
+        from winnow.permissions import allowed, complete_setup
+        with self.assertRaises(KeyError):
+            complete_setup({}, {"internet": True}, [])
+        with self.assertRaises(KeyError):
+            allowed({}, "internet")
+
+
+class TestOffline(unittest.TestCase):
+    """The setup screen promises Winnow never goes online. Keep that true."""
+
+    def test_no_network_code(self):
+        import re
+        banned = re.compile(r"^\s*(import|from)\s+(socket|urllib|http|requests|ftplib|smtplib|asyncio|webbrowser|ssl)\b", re.M)
+        src = Path(__file__).resolve().parent.parent / "winnow"
+        for f in src.glob("*.py"):
+            self.assertIsNone(banned.search(f.read_text("utf-8")), f"network import in {f.name}")
+
+
 if __name__ == "__main__":
     unittest.main()
