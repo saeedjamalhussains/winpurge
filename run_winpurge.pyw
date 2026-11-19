@@ -6,6 +6,6 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from winpurge.launcher import start  # noqa: E402
+from winpurge import start  # noqa: E402
 
 sys.exit(start())

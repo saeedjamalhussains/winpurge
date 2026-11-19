@@ -5,12 +5,16 @@ rem  Builds the WinPurge installer:  dist\WinPurge-Setup-<version>.exe
 rem
 rem  Needs: Python 3.10+ from python.org, and Inno Setup 6.3+
 rem         (winget install -e --id JRSoftware.InnoSetup)
-rem  Optional: signing. Set one of these first (see SIGNING.md):
+rem  Optional: signing. Set one of these first (see "Signing" in INSTALL.md):
 rem         WINPURGE_SIGN_DLIB + WINPURGE_SIGN_METADATA   (Microsoft Artifact Signing)
 rem         WINPURGE_SIGN_THUMBPRINT                       (certificate on a token)
 rem         WINPURGE_SIGN_PFX + WINPURGE_SIGN_PASSWORD     (older .pfx file)
 rem  Smart App Control blocks unsigned builds; the build tells you if it's unsigned.
+rem
+rem  build.bat sign <file>   signs one file (Inno Setup uses this for Setup.exe
+rem                          and the uninstaller). Already-signed files are skipped.
 rem ===========================================================================
+if /i "%~1"=="sign" goto :sign_one
 cd /d "%~dp0"
 echo.
 echo  Building WinPurge
@@ -37,13 +41,17 @@ if not exist ".build-venv\Scripts\python.exe" (
   py -3 -m venv .build-venv || exit /b 1
 )
 set PY=.build-venv\Scripts\python.exe
-"%PY%" -m pip install --quiet --upgrade pip "pyinstaller>=6,<7" || exit /b 1
+"%PY%" -m pip install --quiet --upgrade pip "pyinstaller>=6.6,<7" || exit /b 1
 
 rem ---------------------------------------------------------------- App
 echo  Building WinPurge.exe...
-"%PY%" -m PyInstaller --noconfirm --clean --log-level WARN --onedir --windowed --noupx ^
-  --name WinPurge --icon assets\winpurge.ico --version-file version_info.txt ^
-  --collect-submodules winpurge --distpath dist --workpath build ^
+rem Icon and file details are generated from the code.
+"%PY%" -c "from winpurge.ui import write_build_files; write_build_files(r'build\assets')" || exit /b 1
+"%PY%" -m PyInstaller --noconfirm --clean --log-level WARN --onedir --windowed --noupx --optimize 2 ^
+  --name WinPurge --icon build\assets\winpurge.ico --version-file build\assets\version_info.txt ^
+  --collect-submodules winpurge --distpath dist --workpath build\pyinstaller ^
+  --exclude-module unittest --exclude-module pydoc --exclude-module doctest --exclude-module pdb ^
+  --exclude-module lib2to3 --exclude-module xmlrpc --exclude-module tkinter.test ^
   run_winpurge.pyw || exit /b 1
 
 rem ---------------------------------------------------------------- Sign
@@ -55,7 +63,7 @@ set UNSIGNED=0
 where signtool >nul 2>&1
 if errorlevel 1 (
   if "!SIGN!"=="1" (
-    echo  signtool was not found. Install the signing tools described in SIGNING.md.
+    echo  signtool was not found. Install the signing tools described in INSTALL.md.
     exit /b 1
   )
   set UNSIGNED=?
@@ -64,7 +72,7 @@ if errorlevel 1 (
 echo  Checking signatures...
 for /r dist\WinPurge %%f in (*.exe *.dll *.pyd) do (
   if "!SIGN!"=="1" (
-    call installer\sign_file.bat "%%f" || (echo  Signing failed: %%~nxf & exit /b 1)
+    call "%~f0" sign "%%f" || (echo  Signing failed: %%~nxf & exit /b 1)
   ) else (
     signtool verify /pa /q "%%f" >nul 2>&1 || set /a UNSIGNED+=1
   )
@@ -84,11 +92,11 @@ if not defined ISCC (
   exit /b 1
 )
 echo  Building the installer...
-set "SIGNCMD=cmd.exe /c call $q%~dp0installer\sign_file.bat$q $f"
+set "SIGNCMD=cmd.exe /c call $q%~f0$q sign $f"
 if "!SIGN!"=="1" (
-  "!ISCC!" /Q /DAppVersion=!VERSION! /DSign "/Swp=!SIGNCMD!" installer\WinPurge.iss || exit /b 1
+  "!ISCC!" /Q /DAppVersion=!VERSION! /DSign "/Swp=!SIGNCMD!" WinPurge.iss || exit /b 1
 ) else (
-  "!ISCC!" /Q /DAppVersion=!VERSION! installer\WinPurge.iss || exit /b 1
+  "!ISCC!" /Q /DAppVersion=!VERSION! WinPurge.iss || exit /b 1
 )
 
 rem ---------------------------------------------------------------- Done
@@ -98,10 +106,30 @@ echo  Done:  !SETUP!
 if "!SIGN!"=="1" (
   echo  Signed. Smart App Control and SmartScreen will check the signature.
 ) else (
-  echo  NOT SIGNED. Smart App Control blocks unsigned apps. See SIGNING.md.
+  echo  NOT SIGNED. Smart App Control blocks unsigned apps. See "Signing" in INSTALL.md.
   if not "!UNSIGNED!"=="?" echo  ^(!UNSIGNED! unsigned files in the app^)
 )
 echo.
 echo  SHA-256 ^(publish it next to the download^):
 certutil -hashfile "!SETUP!" SHA256 | findstr /v "hash CertUtil"
 exit /b 0
+
+rem ---------------------------------------------------------------- build.bat sign <file>
+:sign_one
+if "%~2"=="" exit /b 2
+signtool verify /pa /q "%~2" >nul 2>&1
+if not errorlevel 1 exit /b 0
+if defined WINPURGE_SIGN_DLIB (
+  signtool sign /q /fd SHA256 /tr http://timestamp.acs.microsoft.com /td SHA256 /dlib "!WINPURGE_SIGN_DLIB!" /dmdf "!WINPURGE_SIGN_METADATA!" "%~2"
+  exit /b !errorlevel!
+)
+if defined WINPURGE_SIGN_THUMBPRINT (
+  signtool sign /q /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /sha1 "!WINPURGE_SIGN_THUMBPRINT!" "%~2"
+  exit /b !errorlevel!
+)
+if defined WINPURGE_SIGN_PFX (
+  signtool sign /q /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f "!WINPURGE_SIGN_PFX!" /p "!WINPURGE_SIGN_PASSWORD!" "%~2"
+  exit /b !errorlevel!
+)
+echo No signing certificate set. See "Signing" in INSTALL.md.
+exit /b 1

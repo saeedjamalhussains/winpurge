@@ -1,5 +1,5 @@
 import sys
 
-from winpurge.launcher import start
+from winpurge import start
 
 sys.exit(start())
