@@ -11,7 +11,7 @@ from . import theme as th
 from .common import SAFE, human_size
 from .theme import px
 from .widgets import (Badge, Button, Card, CheckTable, Dropdown, ProgressBar, ScrollFrame, SearchBox, Segmented,
-                      ask, icon_label, label, rounded_rect)
+                      ask, label, rounded_rect)
 
 PAD = 32
 SEGMENT_COLORS = {"caches": "#3B82F6", "dev": "#8B5CF6", "large": "#F59E0B", "apps": "#14B8A6",
@@ -70,7 +70,6 @@ def divider(parent, pady=10):
 
 
 def setting_row(parent, title, desc, control_factory, badge=None, status=None):
-    P = th.P
     row = tk.Frame(parent, bg=parent.cget("bg"))
     row.pack(fill="x", pady=px(4))
     right = tk.Frame(row, bg=row.cget("bg"))

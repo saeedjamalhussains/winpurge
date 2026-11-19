@@ -393,7 +393,6 @@ class UninstallerPage(Page):
 
 def review_leftovers(parent, app, gone, items):
     """One review for everything the uninstalled apps left behind."""
-    P = th.P
 
     def build(frame):
         box = Card(frame, padding=4, stretch=True)

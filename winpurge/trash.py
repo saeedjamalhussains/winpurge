@@ -6,7 +6,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -194,10 +193,10 @@ def relaunch_as_admin() -> bool:
     """Start a new elevated copy (Windows shows the UAC prompt)."""
     if not IS_WINDOWS:
         return False
-    if getattr(sys, "frozen", False):
-        exe, params = sys.executable, ""
-    else:
-        exe, params = sys.executable, f'-m winpurge'
+    import subprocess
+    from .shell import self_command
+    cmd = self_command()       # WinPurge.exe, or pythonw + run_winpurge.pyw (no console window)
+    exe, params = cmd[0], subprocess.list2cmdline(cmd[1:])
     rc = ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params,
                                              str(Path(__file__).resolve().parent.parent), 1)
     return rc > 32

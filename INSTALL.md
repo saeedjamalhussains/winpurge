@@ -6,33 +6,66 @@ WinPurge removes apps completely, clears out junk and puts Windows' privacy sett
 
 ## Install
 
-1. Download **`WinPurge-Setup-0.3.0.exe`**.
+1. Download **`WinPurge-Setup-0.4.0.exe`**.
 2. Double-click it, tick **Add a shortcut to the Desktop** if you want one, and press **Install**.
 3. WinPurge opens when it's done.
 
 That's it. No administrator rights and no Python are needed. WinPurge installs for your account only, adds itself to the Start menu, and appears in **Settings → Apps → Installed apps**.
 
 ### First start
-WinPurge shows one welcome page before it looks at anything. Choose what it may look at, then press **Get started**:
+WinPurge shows one welcome page before it looks at anything. Choose what it may look at, then press **Get started**. It then scans everything once and shows what you can safely get back.
 
 | Permission | On at first |
 |---|---|
-| Read the list of installed apps | Yes |
-| Look in cache and temporary folders | Yes |
+| Read installed apps and command-line tools | Yes |
+| Look in cache, temporary and developer tool folders | Yes |
 | Look for files left by removed apps | Yes |
-| Look inside project folders you choose | No |
+| Look for build folders in your coding projects | Yes |
+| Look for large files in your folders | Yes |
 | Offer to remove an app's registry settings | No |
 | Show and change Windows privacy settings | No |
 
 You can change these at any time under **Settings** in WinPurge.
 
-### Using it
-- **Overview:** press **Scan now**. Smart Scan shows how much can be cleaned, then **Review and clean** takes you to the list.
-- **Apps:** select an app and press **Uninstall**. Its own uninstaller runs, then WinPurge shows what it left behind.
-- **Clean Up:** items marked *Safe* are already ticked; *Check first* items ask before you tick them. **Move to Recycle Bin** removes the ticked items.
-- **Privacy:** flip a switch to change a setting right away, or press **Make everything private**. **Restore originals** puts back everything WinPurge changed.
+### What each section does
 
-A few things need administrator rights: leftovers in Program Files and some privacy settings. For those, use **Restart as administrator** on the Privacy page or in Settings.
+| Section | What it does |
+|---|---|
+| **Overview** | One bar for the whole drive, split into App Caches, Dev Tools, Large Files, installed apps, leftovers and everything else. Click a row to open it. **Clean Safe Items** moves every *Safe* item to the Recycle Bin after one confirmation. Also shows what's in the Recycle Bin and how much WinPurge has cleaned so far. |
+| **App Caches** | Windows junk (Temp, update downloads, crash dumps, error reports), browser caches and every app's own cache folders, one row per app. |
+| **Dev Tools** | npm, pip, uv, NuGet, Gradle, Cargo, JetBrains, VS Code and other caches; Android emulators and system images; Docker Desktop's disk; and `node_modules`, `.venv`, `target`, `bin/obj` and build folders in projects you haven't changed for a while. |
+| **Large Files** | Big files in Desktop, Documents, Downloads, Videos, Music and Pictures, filtered by kind, size and when you last used them. Finds downloaded AI models (Ollama, LM Studio, Hugging Face and more), disk images, virtual machines, leftover installers, unfinished downloads and exact **Duplicates**. |
+| **Uninstaller** | Uninstall one app or several at once, then review what they left behind. **Leftovers** lists data from apps already gone. **Command-line tools** lists tools installed with npm, pipx, uv, Cargo or dotnet. |
+| **Privacy** | Windows' telemetry and privacy settings, with switches that apply right away and **Restore originals**. |
+| **Settings** | Appearance, automatic cleaning, how old a project must be, extra folders to scan, excluded folders, the right-click menu, the uninstall watcher, permissions, cleaning history, and **Uninstall WinPurge**. |
+
+**Ratings:** *Safe* means it rebuilds itself and is ticked for you. *Check first* means it may hold something you want; it's never ticked for you and asks before you tick it. Greyed rows are in use or need administrator rights.
+
+**Safety:**
+- Everything goes to the **Recycle Bin**, and WinPurge never empties it.
+- Running apps are asked to close the way clicking X does, never by force; if one won't close, its files stay.
+- Projects you're working in (a git command running, a program running from the folder, or a change in the last few minutes) never appear.
+- Files kept only in OneDrive are skipped, and OneDrive and Dropbox folders are never offered, because deleting there deletes on every device.
+
+The only things removed permanently are command-line tools, which their own package manager uninstalls, and Steam games, which Steam deletes. WinPurge says so before either happens.
+
+### Optional extras (off until you turn them on in Settings)
+- **Uninstall from the right-click menu:** right-click any program or shortcut → **Uninstall with WinPurge**. On Windows 11 it's under **Show more options**. Dropping a program onto WinPurge does the same.
+- **Review leftovers when an app is uninstalled:** a small background watcher notices when any app is uninstalled, even with WinPurge closed, and opens a review of just that app's leftovers. It stays quiet when nothing is left behind.
+- **Clean automatically:** weekly, monthly or another interval. When a clean is due, WinPurge cleans the *Safe* items the next time it opens (the watcher reminds you). It never cleans in the background and never touches Large Files or *Check first* items.
+
+### Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| Ctrl+1 to Ctrl+7 | Go to a section |
+| Ctrl+R or F5 | Scan the current section |
+| Ctrl+Shift+R | Scan everything |
+| Ctrl+F | Search (Large Files, Uninstaller) |
+| Alt+1 to Alt+3 | Filter: All, Safe, Check First |
+| Ctrl+, | Settings |
+
+A few things need administrator rights: system junk such as Windows Update downloads, leftovers in Program Files, and some privacy settings. For those, use **Restart as administrator** in Settings.
 
 ---
 
@@ -48,7 +81,7 @@ A few things need administrator rights: leftovers in Program Files and some priv
 To check that your download is the original, compare its SHA-256 with the one published next to the download:
 
 ```powershell
-Get-FileHash .\WinPurge-Setup-0.3.0.exe -Algorithm SHA256
+Get-FileHash .\WinPurge-Setup-0.4.0.exe -Algorithm SHA256
 ```
 
 ---
@@ -57,7 +90,7 @@ Get-FileHash .\WinPurge-Setup-0.3.0.exe -Algorithm SHA256
 Run the newer `WinPurge-Setup-<version>.exe`. It replaces the old version and keeps your settings.
 
 ## Uninstall
-**Settings → Apps → Installed apps → WinPurge → Uninstall.**
+In WinPurge: **Settings → Uninstall WinPurge**. It turns off the watcher and the right-click menu item, checks they stopped, then starts the uninstaller. You can also use **Settings → Apps → Installed apps → WinPurge → Uninstall**, which turns them off too.
 
 - If WinPurge changed privacy settings, the uninstaller reminds you to restore them first, because they stay changed otherwise.
 - It then asks whether to remove WinPurge's settings and logs. Backups of your original privacy and registry settings are kept either way.
@@ -77,7 +110,7 @@ Where WinPurge keeps its data:
 
 | Folder | What's in it |
 |---|---|
-| `%APPDATA%\WinPurge` | `settings.json`, `ignored.json` (hidden items), `privacy-backup.json` (your original privacy settings), `registry-backups\` (`.reg` files; double-click one to restore it) |
+| `%APPDATA%\WinPurge` | `settings.json`, `history.json` (cleaning history), `ignored.json` (excluded folders), `privacy-backup.json` (your original privacy settings), `registry-backups\` (`.reg` files; double-click one to restore it) |
 | `%LOCALAPPDATA%\WinPurge\logs` | Error log |
 
 ---
@@ -116,7 +149,11 @@ Running from source uses Python's own signed launcher, so it works with Smart Ap
 
 | Path | What it is |
 |---|---|
-| `winpurge\` | The app: `app.py` (window), `pages.py`, `welcome.py`, `widgets.py`, `theme.py`, `gfx.py` (drawn graphics), plus the scanning, cleaning and privacy logic |
+| `winpurge\app.py`, `pages.py`, `page_*.py`, `welcome.py`, `prompts.py` | The window, its sections, the welcome page and the watcher's pop-ups |
+| `winpurge\caches.py`, `largefiles.py`, `leftovers.py`, `clitools.py`, `apps.py` | What each section scans for |
+| `winpurge\trash.py`, `system.py`, `history.py`, `privacy.py` | Recycle Bin, running programs, history and schedule, privacy settings |
+| `winpurge\shell.py`, `watcher.py` | Right-click menu, uninstall watcher |
+| `winpurge\widgets.py`, `theme.py`, `gfx.py` | Look and feel: controls, colours, drawn graphics |
 | `run_winpurge.pyw` | Starts the app; also the entry point for the build |
 | `assets\winpurge.ico` | App icon, generated by `winpurge.gfx.write_ico` |
 | `installer\` | Inno Setup script and the signing helper |

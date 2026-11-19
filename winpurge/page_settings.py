@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 import time
 import tkinter as tk
 from tkinter import filedialog
@@ -14,7 +13,7 @@ from . import history as hist
 from . import theme as th
 from .caches import STALE_CHOICES
 from .common import folder_size, human_size
-from .pages import PAD, Page, divider, setting_row, when
+from .pages import PAD, Page, divider, setting_row
 from .permissions import PERMISSIONS
 from .theme import px
 from .trash import app_data_dir, is_admin

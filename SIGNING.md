@@ -119,7 +119,7 @@ The token or signing app may ask for your PIN, possibly once per file.
 ## Check the result
 
 ```bat
-signtool verify /pa /v dist\WinPurge-Setup-0.3.0.exe
+signtool verify /pa /v dist\WinPurge-Setup-0.4.0.exe
 signtool verify /pa /v dist\WinPurge\WinPurge.exe
 ```
 
