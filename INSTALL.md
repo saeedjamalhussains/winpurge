@@ -1,142 +1,66 @@
 # Installing WinPurge
 
-WinPurge is an app uninstaller, junk cleaner and privacy-settings manager for **Windows 10 and 11**. It works fully offline and moves everything it removes to the Recycle Bin.
-
-There are two ways to install it:
-
-| | **A. Run with Python** | **B. Build WinPurge.exe** |
-|---|---|---|
-| Best for | Your own PC | Sharing with other people |
-| Needs Python on the PC | Yes | Only on the PC that builds it |
-| Works with Smart App Control on | Yes ([why](#smart-app-control)) | Only if the build is signed |
-| Time | About 5 minutes | About 10 minutes |
+WinPurge removes apps completely, clears out junk and puts Windows' privacy settings in one place. It runs on **Windows 10 and 11**, works fully offline, and moves everything it removes to the Recycle Bin.
 
 ---
 
-## A. Run with Python (recommended)
+## Install
 
-### 1. Install Python
-1. Download Python **3.10 or newer** from **python.org**, not the Microsoft Store.
-2. Run the installer. On the first screen, leave **"Use admin privileges when installing py.exe"** as it is, then choose **Customize installation**.
-3. Make sure **"tcl/tk and IDLE"** and **"py launcher"** are ticked. WinPurge needs Tk for its window.
-4. Finish the installation.
+1. Download **`WinPurge-Setup-0.3.0.exe`**.
+2. Double-click it, tick **Add a shortcut to the Desktop** if you want one, and press **Install**.
+3. WinPurge opens when it's done.
 
-### 2. Get WinPurge
-Download it from the repository, https://github.com/saeedjamalhussains/winpurge:
+That's it. No administrator rights and no Python are needed. WinPurge installs for your account only, adds itself to the Start menu, and appears in **Settings → Apps → Installed apps**.
 
-- **With Git:** `git clone https://github.com/saeedjamalhussains/winpurge.git`
-- **Without Git:** click **Code → Download ZIP**, then right-click the ZIP → **Extract All…**
+### First start
+WinPurge shows one welcome page before it looks at anything. Choose what it may look at, then press **Get started**:
 
-Put the folder somewhere permanent, for example `C:\Users\<you>\Apps\WinPurge`.
+| Permission | On at first |
+|---|---|
+| Read the list of installed apps | Yes |
+| Look in cache and temporary folders | Yes |
+| Look for files left by removed apps | Yes |
+| Look inside project folders you choose | No |
+| Offer to remove an app's registry settings | No |
+| Show and change Windows privacy settings | No |
 
-### 3. Start it
-Double-click **`run_winpurge.pyw`**. No console window opens; WinPurge appears after a moment.
+You can change these at any time under **Settings** in WinPurge.
 
-Or, from a terminal in that folder:
+### Using it
+- **Overview:** press **Scan now**. Smart Scan shows how much can be cleaned, then **Review and clean** takes you to the list.
+- **Apps:** select an app and press **Uninstall**. Its own uninstaller runs, then WinPurge shows what it left behind.
+- **Clean Up:** items marked *Safe* are already ticked; *Check first* items ask before you tick them. **Move to Recycle Bin** removes the ticked items.
+- **Privacy:** flip a switch to change a setting right away, or press **Make everything private**. **Restore originals** puts back everything WinPurge changed.
 
-```bat
-py -m winpurge
-```
-
-### 4. Add a shortcut (optional)
-Right-click `run_winpurge.pyw` → **Show more options → Send to → Desktop (create shortcut)**. Rename the shortcut to "WinPurge". You can then right-click it → **Pin to Start**.
-
----
-
-## B. Build WinPurge.exe
-
-Do this on one Windows PC; the result runs on other PCs without Python.
-
-### 1. Prepare
-1. Install Python from python.org as in [A1](#1-install-python). Builds made with Microsoft Store or conda Python may include unsigned files.
-2. Optional, for signing: install the **Windows SDK** (it includes `signtool`).
-
-### 2. Build
-Open a terminal in the WinPurge folder and run:
-
-```bat
-build_exe.bat
-```
-
-It installs PyInstaller, builds the app, then lists or signs the files (see [Signing](#3-sign-the-build-for-smart-app-control)). The result is:
-
-```
-dist\WinPurge\
-├── WinPurge.exe
-└── _internal\        ← required, keep it next to WinPurge.exe
-```
-
-At the end it prints the **SHA-256** of `WinPurge.exe`. Publish it next to your download so people can check their copy.
-
-### 3. Sign the build (for Smart App Control)
-Unsigned builds are blocked on PCs with Smart App Control on. To sign, set **one** of these before running `build_exe.bat`:
-
-**Microsoft Artifact Signing** (an Azure service; check it's offered in your country):
-```bat
-set WINPURGE_SIGN_DLIB=C:\path\to\Azure.CodeSigning.Dlib.dll
-set WINPURGE_SIGN_METADATA=C:\path\to\metadata.json
-```
-
-**A code-signing certificate from a public certificate authority** (`.pfx` file):
-```bat
-set WINPURGE_SIGN_PFX=C:\path\to\certificate.pfx
-set WINPURGE_SIGN_PASSWORD=your-password
-```
-
-The script signs **every** unsigned `.exe`, `.dll` and `.pyd` in the build. A self-signed certificate won't work.
-
-### 4. Install the .exe
-1. Copy the whole `dist\WinPurge` folder to `%LOCALAPPDATA%\Programs\WinPurge`. Paste that path into File Explorer's address bar to open it.
-2. Right-click `WinPurge.exe` → **Pin to Start**.
+A few things need administrator rights: leftovers in Program Files and some privacy settings. For those, use **Restart as administrator** on the Privacy page or in Settings.
 
 ---
 
-## First start
+## If Windows warns you
 
-A short setup appears before WinPurge looks at anything:
+| Message | What to do |
+|---|---|
+| **"Windows protected your PC"** (SmartScreen) | This appears for apps Windows hasn't seen much yet. If you got the installer from a source you trust, choose **More info → Run anyway**. |
+| **"Smart App Control blocked an app"** | The installer you have isn't signed. Ask for a signed release, or build and sign it yourself (see below). Don't turn Smart App Control off: on many Windows 11 versions it can't be turned back on without reinstalling Windows. |
+| **Firewall prompt** | There won't be one. WinPurge never connects to the internet. |
+| **Antivirus warning** | Report it as a false positive at https://www.microsoft.com/wdsi/filesubmission. Don't add exclusions or turn protection off. |
 
-1. **Welcome**: how WinPurge keeps your PC safe.
-2. **Permissions**: tick what it may look at. Each permission explains exactly what it reads.
+To check that your download is the original, compare its SHA-256 with the one published next to the download:
 
-   | Permission | Starts ticked |
-   |---|---|
-   | Read the list of installed apps | Yes |
-   | Look in cache and temporary folders | Yes |
-   | Look for files left by removed apps | Yes |
-   | Look inside project folders you choose | No |
-   | Offer to remove an app's registry settings | No |
-   | Show and change Windows privacy settings | No |
-
-3. **Project folders**: only if you allowed it.
-4. **Ready**: press **Finish**.
-
-You can change these later with **Settings…** at the bottom of the window.
-
-### Administrator rights
-WinPurge runs as a normal user. A few things need administrator rights: removing leftovers in Program Files or ProgramData, and the Privacy settings marked *admin*. For those, press **Restart as administrator** at the bottom right and accept the Windows prompt.
+```powershell
+Get-FileHash .\WinPurge-Setup-0.3.0.exe -Algorithm SHA256
+```
 
 ---
 
-## Windows security messages
+## Update
+Run the newer `WinPurge-Setup-<version>.exe`. It replaces the old version and keeps your settings.
 
-### Smart App Control
-*"Smart App Control blocked an app that may be unsafe"*
+## Uninstall
+**Settings → Apps → Installed apps → WinPurge → Uninstall.**
 
-- **Running with Python (A):** this route goes through Python's own signed launcher, so it should not be blocked. If it is, right-click the downloaded ZIP → **Properties** → tick **Unblock** → **OK**, then extract it again.
-- **WinPurge.exe (B):** the build isn't signed. Sign it as in [B3](#3-sign-the-build-for-smart-app-control), or use route A.
-
-Don't turn Smart App Control off to get around this. On many Windows 11 versions it can't be turned back on without reinstalling Windows.
-
-### SmartScreen
-*"Windows protected your PC"*
-
-This is shown for new apps that Windows hasn't seen much yet. Choose **More info → Run anyway** if you trust the source. Signed builds stop showing it once the certificate has a reputation.
-
-### Firewall
-WinPurge never connects to the internet, so Windows Firewall has nothing to ask about and needs no rule.
-
-### Antivirus
-If Microsoft Defender flags `WinPurge.exe`, report it as a false positive at https://www.microsoft.com/wdsi/filesubmission. Don't add exclusions or turn Defender off.
+- If WinPurge changed privacy settings, the uninstaller reminds you to restore them first, because they stay changed otherwise.
+- It then asks whether to remove WinPurge's settings and logs. Backups of your original privacy and registry settings are kept either way.
 
 ---
 
@@ -144,31 +68,58 @@ If Microsoft Defender flags `WinPurge.exe`, report it as a false positive at htt
 
 | Problem | Fix |
 |---|---|
-| Double-clicking `run_winpurge.pyw` opens a text editor | Right-click it → **Open with → Choose another app → Python** (the rocket icon), tick **Always**. |
-| "This Python has no Tk" | Run the Python installer again → **Modify** → tick **tcl/tk and IDLE**. |
-| `'py' is not recognized` | Run the Python installer again → **Modify** → tick **py launcher**. |
-| WinPurge shows an error, or closes | Details are saved in `%LOCALAPPDATA%\WinPurge\logs\winpurge.log`. Include that file when you report the problem. |
-| Some items say "Access denied" | Press **Restart as administrator**, or close the program using those files. |
+| WinPurge shows an error or closes | The details are in `%LOCALAPPDATA%\WinPurge\logs\winpurge.log`. Include that file when you report the problem. |
+| Some items say "Access denied" | Use **Restart as administrator**, or close the program that's using those files. |
 | Disk space didn't go up after cleaning | Removed items are in the Recycle Bin. Empty it to get the space back. |
+| The Privacy page says it's turned off | Turn on **Show and change Windows privacy settings** in WinPurge's **Settings**. |
 
----
-
-## Updating
-
-- **Route A with Git:** run `git pull` in the WinPurge folder.
-- **Route A with a ZIP, or route B:** replace the folder with the new one.
-
-Your settings are kept, because they're stored separately (see below).
-
-## Uninstalling WinPurge
-
-1. **If you changed privacy settings**, open the **Privacy** tab and press **Restore my original settings** first. Otherwise those settings stay as you set them.
-2. Delete the WinPurge folder.
-3. Delete its data folders, if you don't want to keep them:
+Where WinPurge keeps its data:
 
 | Folder | What's in it |
 |---|---|
-| `%APPDATA%\WinPurge` | `settings.json` (setup choices), `ignored.json` (hidden items), `privacy-backup.json` (original privacy settings), `registry-backups\` (`.reg` files; double-click one to restore it) |
+| `%APPDATA%\WinPurge` | `settings.json`, `ignored.json` (hidden items), `privacy-backup.json` (your original privacy settings), `registry-backups\` (`.reg` files; double-click one to restore it) |
 | `%LOCALAPPDATA%\WinPurge\logs` | Error log |
 
-WinPurge adds no services, scheduled tasks or startup entries, so there's nothing else to remove.
+---
+
+## For developers
+
+### Build the installer
+On a Windows PC:
+
+```bat
+winget install -e --id Python.Python.3.13
+winget install -e --id JRSoftware.InnoSetup
+```
+
+Close and reopen the terminal, then in the WinPurge folder:
+
+```bat
+build.bat
+```
+
+It sets up a private build environment (`.build-venv`), builds the app with PyInstaller, signs it if signing is set up, and creates **`dist\WinPurge-Setup-<version>.exe`**. At the end it prints the installer's SHA-256 and says whether the build is signed.
+
+### Sign it
+Unsigned installers are blocked by Smart App Control. **[SIGNING.md](SIGNING.md)** explains how to get a trusted signature, through Microsoft Artifact Signing or a certificate authority. Once the environment variables it describes are set, `build.bat` signs the app, the installer and the uninstaller.
+
+### Run from source
+Double-click **`install.bat`**. It finds Python 3.10+ (or installs it with winget), adds WinPurge to the Start menu and Desktop, and starts it. Or run it directly:
+
+```bat
+py -m winpurge
+```
+
+Running from source uses Python's own signed launcher, so it works with Smart App Control on and no certificate.
+
+### Project layout
+
+| Path | What it is |
+|---|---|
+| `winpurge\` | The app: `app.py` (window), `pages.py`, `welcome.py`, `widgets.py`, `theme.py`, `gfx.py` (drawn graphics), plus the scanning, cleaning and privacy logic |
+| `run_winpurge.pyw` | Starts the app; also the entry point for the build |
+| `assets\winpurge.ico` | App icon, generated by `winpurge.gfx.write_ico` |
+| `installer\` | Inno Setup script and the signing helper |
+| `build.bat` | Builds and signs the installer |
+| `install.bat` | Runs WinPurge from source |
+| `version_info.txt` | File details for `WinPurge.exe`; keep it in step with `winpurge\__init__.py` |

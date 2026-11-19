@@ -27,7 +27,7 @@ def start() -> int:
                               "Install Python from python.org and keep \"tcl/tk and IDLE\" ticked.")
             return 1
 
-        from .ui import WinPurgeApp
+        from .app import WinPurgeApp
         app = WinPurgeApp()
 
         def on_tk_error(exc_type, exc, tb):

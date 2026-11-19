@@ -34,7 +34,7 @@ PERMISSIONS: list[Permission] = [
     Permission(
         "scan_projects", "Look inside project folders you choose",
         "Finds node_modules, build and cache folders in coding projects you haven't edited "
-        "for 30 days. Only inside the folders you pick on the next page.",
+        "for a while. Only inside the folders you choose in Settings.",
         False),
     Permission(
         "registry_cleanup", "Offer to remove an app's registry settings",
@@ -44,8 +44,8 @@ PERMISSIONS: list[Permission] = [
     Permission(
         "privacy", "Show and change Windows privacy settings",
         "Shows what diagnostic data, ads, activity history, typing, speech and location settings "
-        "this PC uses, and lets you change them from WinPurge. Nothing changes until you press "
-        "Apply, and your original settings are saved so you can restore them.",
+        "this PC uses, and lets you change them from WinPurge. Nothing changes until you choose to, "
+        "and your original settings are saved so you can restore them.",
         False),
 ]
 
@@ -92,8 +92,8 @@ SAFETY_POINTS = [
      "Registry settings are backed up to a .reg file first."),
     ("Leaves Windows alone",
      "The Windows folder, Program Files, ProgramData, AppData and your user folder themselves "
-     "can never be removed. Windows settings change only when you press Apply on the Privacy "
-     "tab, and the old values are kept so you can restore them."),
+     "can never be removed. Windows settings change only when you change them on the Privacy "
+     "page, and the old values are kept so you can restore them."),
     ("Runs without administrator rights",
      "Only folders an administrator installed need it. WinPurge asks for it only when you press "
      "Restart as administrator."),

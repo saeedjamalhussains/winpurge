@@ -206,6 +206,17 @@ class IgnoreList:
         return any(self._key(e["path"]) == self._key(p) and (e.get("until") or now + 1) > now
                    for e in self.entries)
 
+    def count(self) -> int:
+        now = time.time()
+        return sum(1 for e in self.entries if (e.get("until") or now + 1) > now)
+
+    def clear(self):
+        self.entries = []
+        try:
+            self.path.write_text("[]", "utf-8")
+        except OSError:
+            pass
+
     def add(self, p: str, days: int | None = None):
         self.entries = [e for e in self.entries if self._key(e["path"]) != self._key(p)]
         self.entries.append({"path": p, "until": time.time() + days * 86400 if days else None})
