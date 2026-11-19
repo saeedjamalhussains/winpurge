@@ -1,4 +1,4 @@
-"""Winnow window: an Apps tab for uninstalling, and a Clean Up tab for caches,
+"""WinPurge window: an Apps tab for uninstalling, and a Clean Up tab for caches,
 old project folders and data left by apps that are gone."""
 from __future__ import annotations
 
@@ -134,10 +134,10 @@ class CheckList(ttk.Frame):
         self._refresh_groups()
 
 
-class WinnowApp(tk.Tk):
+class WinPurgeApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(f"Winnow {__version__}" + ("  (Administrator)" if is_admin() else ""))
+        self.title(f"WinPurge {__version__}" + ("  (Administrator)" if is_admin() else ""))
         self.geometry("900x620")
         self.minsize(720, 480)
         self.settings = Settings()
@@ -205,7 +205,7 @@ class WinnowApp(tk.Tk):
                 self.config(cursor="")
                 if err:
                     self.status.config(text="")
-                    messagebox.showerror("Winnow", f"Something went wrong:\n{err}")
+                    messagebox.showerror("WinPurge", f"Something went wrong:\n{err}")
                 else:
                     done(result)
         except queue.Empty:
@@ -266,12 +266,12 @@ class WinnowApp(tk.Tk):
     def uninstall_selected(self):
         sel = self.apps_tree.focus()
         if not sel:
-            messagebox.showinfo("Winnow", "Select an app first.")
+            messagebox.showinfo("WinPurge", "Select an app first.")
             return
         app = self.installed[int(sel)]
         look_files, look_registry = self.can("scan_leftovers"), self.can("registry_cleanup")
         if not messagebox.askyesno("Uninstall", f"Run the uninstaller for {app.name}?\n\n"
-                                   "Its own uninstaller opens first. Afterwards Winnow looks for files "
+                                   "Its own uninstaller opens first. Afterwards WinPurge looks for files "
                                    "it left behind, and shows them before moving anything."):
             return
 
@@ -290,7 +290,7 @@ class WinnowApp(tk.Tk):
             self._fill_apps()
             if not gone:
                 self.status.config(text=f"{app.name} is still installed (uninstaller exit code {code}).")
-                messagebox.showinfo("Winnow", f"{app.name} is still installed. The uninstaller may have "
+                messagebox.showinfo("WinPurge", f"{app.name} is still installed. The uninstaller may have "
                                     "been cancelled, or it needs a restart to finish.")
                 return
             if not items:
@@ -352,7 +352,7 @@ class WinnowApp(tk.Tk):
                                 "Turn it on in Settings.")
             return
         roots = self.settings.data["project_roots"]
-        msg = "Winnow looks for node_modules, build and cache folders in projects inside these folders:\n\n" + \
+        msg = "WinPurge looks for node_modules, build and cache folders in projects inside these folders:\n\n" + \
               ("\n".join(roots) if roots else "(none yet)") + "\n\nAdd a folder?"
         if messagebox.askyesno("Project folders", msg):
             d = filedialog.askdirectory(title="Choose a folder that holds your projects")
@@ -370,7 +370,7 @@ class WinnowApp(tk.Tk):
         # Unused app data is only judged against the installed-app list.
         do_orphans = self.can("scan_leftovers") and self.can("read_apps")
         if not (do_caches or do_projects or do_orphans):
-            messagebox.showinfo("Winnow", "All scans are turned off. Turn some on in Settings.")
+            messagebox.showinfo("WinPurge", "All scans are turned off. Turn some on in Settings.")
             return
 
         def work():
@@ -392,7 +392,7 @@ class WinnowApp(tk.Tk):
     def clean_ticked(self):
         items = self.clean_list.checked()
         if not items:
-            messagebox.showinfo("Winnow", "Nothing is ticked.")
+            messagebox.showinfo("WinPurge", "Nothing is ticked.")
             return
         size = human_size(sum(i.size for i in items))
         if not messagebox.askyesno("Move to Recycle Bin",
@@ -408,7 +408,7 @@ class WinnowApp(tk.Tk):
 
 
 class LeftoversDialog(tk.Toplevel):
-    def __init__(self, master: WinnowApp, app: App, items: list[Item]):
+    def __init__(self, master: WinPurgeApp, app: App, items: list[Item]):
         super().__init__(master)
         self.master_app = master
         self.title(f"Leftovers from {app.name}")
@@ -435,7 +435,7 @@ class LeftoversDialog(tk.Toplevel):
                                "Moving leftovers to Recycle Bin…")
 
 
-def show_result(app: WinnowApp, res: Result):
+def show_result(app: WinPurgeApp, res: Result):
     app.status.config(text=f"Moved {len(res.moved)} items ({human_size(res.bytes_moved)}) to the Recycle Bin. "
                            "Empty it to get the space back.")
     if res.failed:
@@ -445,4 +445,4 @@ def show_result(app: WinnowApp, res: Result):
 
 
 def main():
-    WinnowApp().mainloop()
+    WinPurgeApp().mainloop()

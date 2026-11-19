@@ -1,4 +1,4 @@
-"""What the user allowed Winnow to do, chosen in the first-run setup.
+"""What the user allowed WinPurge to do, chosen in the first-run setup.
 Kept free of Tk so it can be tested anywhere."""
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def complete_setup(settings: dict, chosen: dict[str, bool], project_roots: list[
 
 SAFETY_POINTS = [
     ("Works offline",
-     "Winnow never connects to the internet. It sends no data, has no updates or analytics, "
+     "WinPurge never connects to the internet. It sends no data, has no updates or analytics, "
      "and opens no network ports, so Windows Firewall has nothing to block and needs no rule."),
     ("Asks before removing anything",
      "Scans only read. Nothing moves until you tick it and confirm."),
@@ -88,6 +88,6 @@ SAFETY_POINTS = [
      "The Windows folder, Program Files, ProgramData, AppData and your user folder themselves "
      "can never be removed."),
     ("Runs without administrator rights",
-     "Only folders an administrator installed need it. Winnow asks for it only when you press "
+     "Only folders an administrator installed need it. WinPurge asks for it only when you press "
      "Restart as administrator."),
 ]

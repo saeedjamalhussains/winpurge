@@ -1,4 +1,4 @@
-"""First-run setup: explains what Winnow does, shows why it is safe, and asks
+"""First-run setup: explains what WinPurge does, shows why it is safe, and asks
 for each permission before anything is scanned."""
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class SetupWizard(tk.Toplevel):
 
     def __init__(self, master, settings: dict, on_done, on_cancel):
         super().__init__(master)
-        self.title("Set up Winnow")
+        self.title("Set up WinPurge")
         self.geometry("680x560")
         self.minsize(600, 500)
         self.resizable(True, True)
@@ -93,8 +93,8 @@ class SetupWizard(tk.Toplevel):
             ttk.Label(self.body, text=sub, wraplength=620, justify="left").pack(anchor="w", pady=(6, 12))
 
     def _page_welcome(self):
-        self._heading(f"Welcome to Winnow {__version__}",
-                      "Winnow removes apps completely and clears caches and old build folders. "
+        self._heading(f"Welcome to WinPurge {__version__}",
+                      "WinPurge removes apps completely and clears caches and old build folders. "
                       "Before it looks at anything, here is how it keeps your PC safe.")
         for title, text in SAFETY_POINTS:
             row = ttk.Frame(self.body)
@@ -106,7 +106,7 @@ class SetupWizard(tk.Toplevel):
             ttk.Label(col, text=text, wraplength=580, justify="left").pack(anchor="w")
 
     def _page_permissions(self):
-        self._heading("What can Winnow look at?",
+        self._heading("What can WinPurge look at?",
                       "Tick what you allow. You can change this later with Settings. "
                       "Each of these only reads; removing always needs your confirmation.")
         for p in PERMISSIONS:
@@ -125,7 +125,7 @@ class SetupWizard(tk.Toplevel):
 
     def _page_projects(self):
         self._heading("Which folders hold your projects?",
-                      "Winnow looks only inside these folders for node_modules, build and cache "
+                      "WinPurge looks only inside these folders for node_modules, build and cache "
                       "folders. You can skip this and add folders later.")
         self.roots_list = tk.Listbox(self.body, height=8)
         self.roots_list.pack(fill="both", expand=True)
@@ -151,7 +151,7 @@ class SetupWizard(tk.Toplevel):
             self.roots_list.delete(sel[0])
 
     def _page_ready(self):
-        self._heading("Ready", "Winnow will use these settings:")
+        self._heading("Ready", "WinPurge will use these settings:")
         for p in PERMISSIONS:
             on = self.vars[p.key].get()
             ttk.Label(self.body, text=f"{'✔' if on else '✖'}  {p.title}",

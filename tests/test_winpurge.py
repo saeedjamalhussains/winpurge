@@ -5,11 +5,11 @@ import time
 import unittest
 from pathlib import Path
 
-from winnow.apps import App, build_uninstall_command
-from winnow.caches import scan_caches, scan_projects
-from winnow.common import CHECK, SAFE, Item, folder_size, is_protected, normalize
-from winnow.leftovers import find_leftovers, find_orphans
-from winnow.trash import IgnoreList, recycle
+from winpurge.apps import App, build_uninstall_command
+from winpurge.caches import scan_caches, scan_projects
+from winpurge.common import CHECK, SAFE, Item, folder_size, is_protected, normalize
+from winpurge.leftovers import find_leftovers, find_orphans
+from winpurge.trash import IgnoreList, recycle
 
 MB = 1024 * 1024
 
@@ -53,7 +53,7 @@ class TestNormalize(unittest.TestCase):
     def test_strips_versions_and_arch(self):
         self.assertEqual(normalize("Notepad++ (64-bit x64) 8.6.2"), "notepad++")
         self.assertEqual(normalize("Mozilla Firefox (x64 en-US)"), "mozillafirefox")
-        from winnow.leftovers import app_names
+        from winpurge.leftovers import app_names
         self.assertIn("firefox", app_names(App("ff", "Mozilla Firefox (x64 en-US)", "Mozilla")))
         self.assertEqual(normalize("7-Zip 23.01 (x64)"), "7zip")
 
@@ -163,7 +163,7 @@ class TestSafety(FakePC):
         trash = self.root / "FakeRecycleBin"
         old_env = dict(os.environ)
         os.environ.update(self.env)
-        os.environ["WINNOW_FAKE_TRASH"] = str(trash)
+        os.environ["WINPURGE_FAKE_TRASH"] = str(trash)
         try:
             write(self.p("APPDATA", "Obsidian", "a"), 50)
             write(self.p("TEMP", "junk1.tmp"), 50)
@@ -197,13 +197,13 @@ class TestIgnore(FakePC):
 
 class TestPermissions(unittest.TestCase):
     def test_nothing_allowed_before_setup(self):
-        from winnow.permissions import PERMISSIONS, allowed, needs_setup
+        from winpurge.permissions import PERMISSIONS, allowed, needs_setup
         self.assertTrue(needs_setup({}))
         for p in PERMISSIONS:
             self.assertFalse(allowed({}, p.key))
 
     def test_choices_saved_and_project_roots_dropped_when_off(self):
-        from winnow.permissions import allowed, complete_setup, needs_setup
+        from winpurge.permissions import allowed, complete_setup, needs_setup
         s = complete_setup({}, {"scan_caches": False, "scan_projects": False}, ["C:\\code"])
         self.assertFalse(needs_setup(s))
         self.assertTrue(allowed(s, "read_apps"))       # default on
@@ -212,7 +212,7 @@ class TestPermissions(unittest.TestCase):
         self.assertEqual(s["project_roots"], [])
 
     def test_unknown_permission_rejected(self):
-        from winnow.permissions import allowed, complete_setup
+        from winpurge.permissions import allowed, complete_setup
         with self.assertRaises(KeyError):
             complete_setup({}, {"internet": True}, [])
         with self.assertRaises(KeyError):
@@ -220,12 +220,12 @@ class TestPermissions(unittest.TestCase):
 
 
 class TestOffline(unittest.TestCase):
-    """The setup screen promises Winnow never goes online. Keep that true."""
+    """The setup screen promises WinPurge never goes online. Keep that true."""
 
     def test_no_network_code(self):
         import re
         banned = re.compile(r"^\s*(import|from)\s+(socket|urllib|http|requests|ftplib|smtplib|asyncio|webbrowser|ssl)\b", re.M)
-        src = Path(__file__).resolve().parent.parent / "winnow"
+        src = Path(__file__).resolve().parent.parent / "winpurge"
         for f in src.glob("*.py"):
             self.assertIsNone(banned.search(f.read_text("utf-8")), f"network import in {f.name}")
 

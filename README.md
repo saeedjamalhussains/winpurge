@@ -1,9 +1,9 @@
-# Winnow
+# WinPurge
 
 An app uninstaller and junk cleaner for Windows 10 and 11. Pure Python (standard library only), with a Tk window.
 
 ## First run
-The first time it opens, Winnow shows a setup wizard before it looks at anything:
+The first time it opens, WinPurge shows a setup wizard before it looks at anything:
 1. **Welcome**: how it stays safe (works offline, asks before removing, uses the Recycle Bin, leaves Windows alone, no administrator rights needed).
 2. **Permissions**: you tick what it may look at: installed apps, caches, leftovers, project folders, registry settings. Until setup is finished, nothing is allowed; cancelling closes the app.
 3. **Project folders**: only if you allowed project scanning.
@@ -34,22 +34,22 @@ Change these later with **Settings…** at the bottom of the window.
 - Right-click → **Don't suggest again** hides an item for good.
 
 ## Run it (Windows)
-Install Python 3.10+ from python.org (includes Tk), then double-click `run_winnow.pyw`, or:
+Install Python 3.10+ from python.org (includes Tk), then double-click `run_winpurge.pyw`, or:
 
 ```bat
-py -m winnow
+py -m winpurge
 ```
 
 Leftovers in Program Files or ProgramData need **Restart as administrator** (bottom right).
 
 ## Build the .exe
-On Windows, run `build_exe.bat`. It produces `dist\Winnow\Winnow.exe` (ship the whole `dist\Winnow` folder), which runs without Python installed.
+On Windows, run `build_exe.bat`. It produces `dist\WinPurge\WinPurge.exe` (ship the whole `dist\WinPurge` folder), which runs without Python installed.
 
 ### Firewall, antivirus and SmartScreen
-- **Firewall:** Winnow has no network code (a test enforces this), so Windows Firewall never asks about it and needs no rule.
+- **Firewall:** WinPurge has no network code (a test enforces this), so Windows Firewall never asks about it and needs no rule.
 - **Antivirus false alarms:** the build avoids the usual triggers: a normal folder build instead of a self-unpacking single file, no UPX compression, and real file properties. If Defender still flags it, report it as a false positive at https://www.microsoft.com/wdsi/filesubmission. Don't turn off Defender or add exclusions for it.
-- **SmartScreen** ("Windows protected your PC") appears for any new unsigned app. Sign it with a code-signing certificate by setting `WINNOW_SIGN_PFX` and `WINNOW_SIGN_PASSWORD` before running `build_exe.bat`. Until then, people can choose **More info → Run anyway**.
-- The build prints the SHA-256 of `Winnow.exe`; publish it next to your download so people can check it.
+- **SmartScreen** ("Windows protected your PC") appears for any new unsigned app. Sign it with a code-signing certificate by setting `WINPURGE_SIGN_PFX` and `WINPURGE_SIGN_PASSWORD` before running `build_exe.bat`. Until then, people can choose **More info → Run anyway**.
+- The build prints the SHA-256 of `WinPurge.exe`; publish it next to your download so people can check it.
 
 ## Tests
 ```bat
@@ -58,4 +58,4 @@ py -m unittest discover -s tests -t .
 The tests build a fake Windows folder layout in a temp folder, so they also run on macOS and Linux.
 
 ## Settings and data
-`%APPDATA%\Winnow\settings.json` (setup choices and project folders), `ignored.json` (hidden items), `registry-backups\` (`.reg` files you can double-click to restore).
+`%APPDATA%\WinPurge\settings.json` (setup choices and project folders), `ignored.json` (hidden items), `registry-backups\` (`.reg` files you can double-click to restore).

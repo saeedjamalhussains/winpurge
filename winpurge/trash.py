@@ -16,7 +16,7 @@ from .common import IS_WINDOWS, Item, is_protected
 
 def app_data_dir() -> Path:
     base = os.environ.get("APPDATA") or os.path.expanduser("~/.config")
-    d = Path(base, "Winnow")
+    d = Path(base, "WinPurge")
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -76,7 +76,7 @@ def _recycle_one(path: str) -> str | None:
         rc = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(op))
         if rc != 0:
             if rc in (5, 0x78):
-                return "Access denied. Restart Winnow as administrator, or close the program using it."
+                return "Access denied. Restart WinPurge as administrator, or close the program using it."
             if rc == 32:
                 return "In use by another program."
             return f"Windows error {rc:#x}"
@@ -87,7 +87,7 @@ def _recycle_one(path: str) -> str | None:
         return None
     # Not Windows: only for development and tests. Moves into a local
     # folder that stands in for the Recycle Bin. Never deletes.
-    fake = os.environ.get("WINNOW_FAKE_TRASH")
+    fake = os.environ.get("WINPURGE_FAKE_TRASH")
     if not fake:
         return "Removal only works on Windows."
     dest = Path(fake, f"{int(time.time()*1000)}-{Path(path).name}")
@@ -180,7 +180,7 @@ def relaunch_as_admin() -> bool:
     if getattr(sys, "frozen", False):
         exe, params = sys.executable, ""
     else:
-        exe, params = sys.executable, f'-m winnow'
+        exe, params = sys.executable, f'-m winpurge'
     rc = ctypes.windll.shell32.ShellExecuteW(None, "runas", exe, params,
                                              str(Path(__file__).resolve().parent.parent), 1)
     return rc > 32
