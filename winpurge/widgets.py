@@ -489,22 +489,40 @@ def apply_ttk_styles(root):
 
 # ---------------------------------------------------------------- Check table
 
-class CheckTable(tk.Frame):
-    """Rows of Items with check boxes, grouped under bold headers.
-    Columns: label (tree), rating, size."""
+def default_values(item, size_fmt):
+    size = "Registry" if item.kind == "registry" else size_fmt(item.size)
+    return (item.level, size)
 
-    def __init__(self, parent, on_change=None, on_select=None, confirm_check=None):
+
+class CheckTable(tk.Frame):
+    """Rows of Items with check boxes.
+    grouped=True: bold group rows by item.category, with a tick box for the group.
+    columns: [(key, heading, width, anchor)] after the name column; values(item) fills them.
+    Locked items (item.locked) are shown greyed and can't be ticked."""
+
+    def __init__(self, parent, on_change=None, on_select=None, confirm_check=None, grouped=True,
+                 columns=(("rating", "Rating", 110, "w"), ("size", "Size", 90, "e")), values=None,
+                 headings=False, on_open=None, group_of=None):
         super().__init__(parent, bg=bg_of(parent))
-        self.on_change, self.on_select = on_change, on_select
+        self.on_change, self.on_select, self.on_open = on_change, on_select, on_open
         self.confirm_check = confirm_check   # fn(item) -> bool, for "Check first" items
-        self.tree = ttk.Treeview(self, style="WP.Treeview", columns=("rating", "size"), show="tree",
-                                 selectmode="browse")
+        self.grouped = grouped
+        self.group_of = group_of or (lambda it: it.category)
+        self.values = values
+        self.size_fmt = lambda n: str(n)
+        self.tree = ttk.Treeview(self, style="WP.Treeview", columns=[c[0] for c in columns],
+                                 show=("tree", "headings") if headings else "tree", selectmode="browse")
         self.tree.column("#0", minwidth=px(240), stretch=True)
-        self.tree.column("rating", width=px(110), anchor="w", stretch=False)
-        self.tree.column("size", width=px(90), anchor="e", stretch=False)
+        if headings:
+            self.tree.heading("#0", text="Name", anchor="w")
+        for key, title, width, anchor in columns:
+            self.tree.column(key, width=px(width), anchor=anchor, stretch=False)
+            if headings:
+                self.tree.heading(key, text=title, anchor=anchor)
         P = th.P
         self.tree.tag_configure("group", font=th.body_strong())
         self.tree.tag_configure("check", foreground=P.warning)
+        self.tree.tag_configure("locked", foreground=P.text3)
         bar = ttk.Scrollbar(self, orient="vertical", command=self.tree.yview, style="WP.Vertical.TScrollbar")
         self.tree.configure(yscrollcommand=bar.set)
         self.tree.pack(side="left", fill="both", expand=True)
@@ -513,13 +531,24 @@ class CheckTable(tk.Frame):
         self.groups: dict[str, list[str]] = {}
         self.tree.bind("<Button-1>", self._click, add="+")
         self.tree.bind("<space>", lambda e: self._toggle(self.tree.focus()))
+        self.tree.bind("<Double-1>", lambda e: self.on_open and self.selected() and self.on_open(self.selected()))
         self.tree.bind("<<TreeviewSelect>>", lambda e: self.on_select and self.on_select(self.selected()))
 
     def _img(self, state):
         P = th.P
         if state == "mixed":
             return gfx.checkbox_img(px(18), True, P.text3, P.text3, P.card)
+        if state == "locked":
+            return gfx.checkbox_img(px(18), False, P.border, P.border, P.control)
         return gfx.checkbox_img(px(18), state, P.accent, P.text3, P.card)
+
+    def _row_values(self, it):
+        return self.values(it) if self.values else default_values(it, self.size_fmt)
+
+    def _tags(self, it):
+        if it.locked:
+            return ("locked",)
+        return ("check",) if it.level != "Safe" else ()
 
     def set_items(self, items, size_fmt):
         self.size_fmt = size_fmt
@@ -527,25 +556,33 @@ class CheckTable(tk.Frame):
         self.items.clear()
         self.groups.clear()
         for it in items:
-            if it.category not in self.groups:
-                gid = self.tree.insert("", "end", text=f"  {it.category}", open=True, tags=("group",))
-                self.groups[it.category] = [gid]
-            gid = self.groups[it.category][0]
-            iid = self.tree.insert(gid, "end", text=f"  {it.label}", image=self._img(it.checked),
-                                   values=(it.level, "Registry" if it.kind == "registry" else size_fmt(it.size)),
-                                   tags=("check",) if it.level != "Safe" else ())
+            parent = ""
+            g = self.group_of(it) if self.grouped else None
+            if self.grouped:
+                if g not in self.groups:
+                    gid = self.tree.insert("", "end", text=f"  {g}", open=True, tags=("group",))
+                    self.groups[g] = [gid]
+                parent = self.groups[g][0]
+            iid = self.tree.insert(parent, "end", text=f"  {it.label}",
+                                   image=self._img("locked" if it.locked else it.checked),
+                                   values=self._row_values(it), tags=self._tags(it))
             self.items[iid] = it
-            self.groups[it.category].append(iid)
+            if self.grouped:
+                self.groups[g].append(iid)
         self._refresh()
 
     def _refresh(self):
         for cat, ids in self.groups.items():
             gid, kids = ids[0], [self.items[i] for i in ids[1:] if i in self.items]
-            n_on = sum(k.checked for k in kids)
-            state = True if kids and n_on == len(kids) else False if n_on == 0 else "mixed"
+            free = [k for k in kids if not k.locked]
+            n_on = sum(k.checked for k in free)
+            state = True if free and n_on == len(free) else False if n_on == 0 else "mixed"
+            n = len(kids)
+            vals = [""] * len(self.tree["columns"])
+            if vals:
+                vals[-1] = self.size_fmt(sum(k.size for k in kids))
             self.tree.item(gid, image=self._img(state),
-                           text=f"  {cat}   ·   {len(kids)} item{'s' if len(kids) != 1 else ''}",
-                           values=("", self.size_fmt(sum(k.size for k in kids))))
+                           text=f"  {cat}   \u00B7   {n} item{'s' if n != 1 else ''}", values=vals)
         if self.on_change:
             self.on_change()
 
@@ -553,14 +590,15 @@ class CheckTable(tk.Frame):
         iid = self.tree.identify_row(e.y)
         if not iid:
             return
-        elem = self.tree.identify_element(e.x, e.y)
-        if "image" in str(elem):
+        if "image" in str(self.tree.identify_element(e.x, e.y)):
             self._toggle(iid)
             return "break"
 
     def _toggle(self, iid):
         if iid in self.items:
             it = self.items[iid]
+            if it.locked:
+                return
             if not it.checked and it.level != "Safe" and self.confirm_check and not self.confirm_check(it):
                 return
             it.checked = not it.checked
@@ -569,26 +607,26 @@ class CheckTable(tk.Frame):
             cat = next((c for c, ids in self.groups.items() if ids[0] == iid), None)
             if cat is None:
                 return
-            kids = [self.items[i] for i in self.groups[cat][1:]]
+            kids = [self.items[i] for i in self.groups[cat][1:] if not self.items[i].locked]
             turn_on = not all(k.checked for k in kids)
             for i in self.groups[cat][1:]:
                 k = self.items[i]
-                if turn_on and k.level != "Safe":
+                if k.locked or (turn_on and k.level != "Safe"):
                     continue   # "Check first" items are only ticked one by one
                 k.checked = turn_on
                 self.tree.item(i, image=self._img(k.checked))
         self._refresh()
 
     def checked(self):
-        return [i for i in self.items.values() if i.checked]
+        return [i for i in self.items.values() if i.checked and not i.locked]
 
     def selected(self):
         return self.items.get(self.tree.focus())
 
     def tick(self, predicate):
         for iid, it in self.items.items():
-            it.checked = predicate(it)
-            self.tree.item(iid, image=self._img(it.checked))
+            it.checked = bool(predicate(it)) and not it.locked
+            self.tree.item(iid, image=self._img("locked" if it.locked else it.checked))
         self._refresh()
 
     def remove_paths(self, paths: set[str]):
@@ -603,6 +641,36 @@ class CheckTable(tk.Frame):
             self.tree.delete(self.groups[cat][0])
             del self.groups[cat]
         self._refresh()
+
+
+# ---------------------------------------------------------------- Segmented control
+
+class Segmented(tk.Frame):
+    """A row of choices, one active (filters and sub-tabs)."""
+
+    def __init__(self, parent, options: list[tuple[str, str]], value: str, command=None):
+        super().__init__(parent, bg=bg_of(parent))
+        self.value, self.command = value, command
+        self.buttons = {}
+        for key, text in options:
+            b = Button(self, text, kind="primary" if key == value else "subtle", height=30,
+                       command=lambda k=key: self.set(k, notify=True))
+            b.pack(side="left", padx=(0, px(4)))
+            self.buttons[key] = b
+
+    def set(self, key, notify=False):
+        self.value = key
+        for k, b in self.buttons.items():
+            b.kind = "primary" if k == key else "subtle"
+            b._font = th.body_strong() if k == key else th.body_font()
+            b._measure()
+            b._draw()
+        if notify and self.command:
+            self.command(key)
+
+    def set_text(self, key, text):
+        if key in self.buttons:
+            self.buttons[key].set_text(text)
 
 
 # ---------------------------------------------------------------- Dialog

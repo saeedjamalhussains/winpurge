@@ -18,6 +18,7 @@ class App:
     publisher: str = ""
     version: str = ""
     install_location: str = ""
+    display_icon: str = ""
     uninstall_string: str = ""
     quiet_uninstall_string: str = ""
     size_kb: int = 0
@@ -69,6 +70,7 @@ def _read_key(winreg, root, path, view):
                         publisher=str(val("Publisher")).strip(),
                         version=str(val("DisplayVersion")).strip(),
                         install_location=str(val("InstallLocation")).strip().strip('"'),
+                        display_icon=str(val("DisplayIcon")).split(",")[0].strip().strip('"'),
                         uninstall_string=str(uninst).strip(),
                         quiet_uninstall_string=str(val("QuietUninstallString")).strip(),
                         size_kb=int(val("EstimatedSize", 0) or 0),

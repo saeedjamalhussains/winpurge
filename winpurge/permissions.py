@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-SETUP_VERSION = 2  # bump to show setup again when permissions change meaning
+SETUP_VERSION = 3  # bump to show setup again when permissions change meaning
 
 
 @dataclass(frozen=True)
@@ -17,14 +17,15 @@ class Permission:
 
 PERMISSIONS: list[Permission] = [
     Permission(
-        "read_apps", "Read the list of installed apps",
-        "Reads the same registry list that Settings > Apps shows. Needed for the Apps tab and "
-        "to tell which leftover folders belong to apps that are still installed.",
+        "read_apps", "Read installed apps and command-line tools",
+        "Reads the same registry list that Settings > Apps shows, and asks npm, pipx, uv, Cargo and "
+        "dotnet which tools they installed. Needed for the Uninstaller and to tell which leftover "
+        "folders belong to apps that are still installed.",
         True),
     Permission(
-        "scan_caches", "Look in cache and temporary folders",
-        "Reads folder sizes in Temp, browser caches (never history, cookies or passwords), "
-        "and developer tool caches such as npm and pip. Nothing is removed without you ticking it.",
+        "scan_caches", "Look in cache, temporary and developer tool folders",
+        "Reads folder sizes in Temp, Windows update and crash files, browser and app caches (never "
+        "history, cookies or passwords), and developer tool caches such as npm and pip.",
         True),
     Permission(
         "scan_leftovers", "Look for files left by removed apps",
@@ -32,10 +33,16 @@ PERMISSIONS: list[Permission] = [
         "finds app data folders unchanged for 90 days whose app is gone.",
         True),
     Permission(
-        "scan_projects", "Look inside project folders you choose",
-        "Finds node_modules, build and cache folders in coding projects you haven't edited "
-        "for a while. Only inside the folders you choose in Settings.",
-        False),
+        "scan_projects", "Look for build folders in your coding projects",
+        "Finds node_modules, build and virtual environment folders in projects you haven't changed "
+        "for a while, in your usual code folders and any you add in Settings.",
+        True),
+    Permission(
+        "scan_large_files", "Look for large files in your folders",
+        "Reads the names and sizes of big files in Desktop, Documents, Downloads, Videos, Music and "
+        "Pictures, and compares same-size files to find exact duplicates. Files are never opened "
+        "otherwise, and cloud-only OneDrive files are skipped.",
+        True),
     Permission(
         "registry_cleanup", "Offer to remove an app's registry settings",
         "After an uninstall, offers the app's own keys under HKEY_CURRENT_USER\\Software. "

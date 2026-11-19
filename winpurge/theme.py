@@ -154,6 +154,10 @@ ICONS = {
     "recycle": ("", "♻"),
     "lock": ("", "⚿"),
     "admin": ("", "⛨"),
+    "code": ("\uE943", "\u2039\u203A"),
+    "history": ("\uE81C", "\u29D6"),
+    "copy": ("\uE8C8", "\u2750"),
+    "terminal": ("\uE756", "\u276F"),
 }
 
 

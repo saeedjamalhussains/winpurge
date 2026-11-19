@@ -25,9 +25,20 @@ class Item:
     level: str = SAFE
     size: int = 0
     note: str = ""
-    kind: str = "path"          # "path" or "registry"
+    kind: str = "path"          # "path", "registry" or "command" (a tool's own uninstall)
     checked: bool = False
-    extra: dict = field(default_factory=dict)
+    extra: dict = field(default_factory=dict)  # paths, contents_only, locked, admin, ...
+    tab: str = ""               # caches, dev, large, leftovers, cli
+    mtime: float = 0.0          # last change, for sorting by date
+
+    @property
+    def paths(self) -> list[str]:
+        return self.extra.get("paths") or [self.path]
+
+    @property
+    def locked(self) -> str | None:
+        """Why this row can't be selected right now (for example, in use)."""
+        return self.extra.get("locked")
 
 
 def env_path(var: str, *parts: str, env=None) -> Path | None:

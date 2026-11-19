@@ -109,6 +109,44 @@ def find_leftovers(app: App, installed: list[App], env=None) -> list[Item]:
     return sorted(found.values(), key=lambda i: -i.size)
 
 
+# Hidden folders in the user folder that belong to one app (by its normalized
+# name). Exact folders only: a folder a command-line tool keeps using after the
+# app is gone (such as .android for adb, .docker for the docker CLI) is not listed.
+DOT_FOLDERS = {
+    "visualstudiocode": [".vscode"],
+    "microsoftvisualstudiocode": [".vscode"],
+    "visualstudiocodeinsiders": [".vscode-insiders"],
+    "vscodium": [".vscode-oss"],
+    "windsurf": [".windsurf"],
+    "trae": [".trae"],
+    "antigravity": [".antigravity"],
+    "githubdesktop": [],
+    "zed": [".zed"],
+    "ollama": [".ollama"],
+    "lmstudio": [".lmstudio"],
+}
+
+
+def find_dot_folders(app: App, env=None) -> list[Item]:
+    """The app's hidden settings folder in your user folder. Always unticked:
+    it holds settings and extensions, not a cache."""
+    env = os.environ if env is None else env
+    home = env.get("USERPROFILE")
+    if not home:
+        return []
+    out = []
+    for key, folders in DOT_FOLDERS.items():
+        if app.norm == key or (len(key) >= 5 and app.norm.startswith(key)):
+            for f in folders:
+                p = os.path.join(home, f)
+                if os.path.isdir(p):
+                    out.append(Item(path=p, label=f"{f}  (your user folder)", category="Leftovers", level=CHECK,
+                                    size=folder_size(p, limit_seconds=5),
+                                    note=f"{app.name} keeps settings and extensions here, not a cache. Check it "
+                                         "before removing."))
+    return out
+
+
 def find_registry_leftovers(app: App, installed: list[App]) -> list[Item]:
     """HKCU\\Software\\<Publisher>\\<App> or HKCU\\Software\\<App>. Registry keys
     cannot go to the Recycle Bin, so these are backed up to a .reg file first

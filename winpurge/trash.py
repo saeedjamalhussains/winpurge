@@ -99,44 +99,61 @@ def _recycle_one(path: str) -> str | None:
     return None
 
 
+def _allowed_system_junk(path: str) -> bool:
+    """True only for the exact system junk folders WinPurge knows, such as
+    C:\\Windows\\Temp. Everything else under Windows stays protected."""
+    from .caches import system_junk_paths
+    return os.path.normcase(os.path.normpath(path)) in system_junk_paths()
+
+
+def _recycle_path(path: str, contents_only: bool, system_junk: bool, res: Result) -> bool:
+    """Recycle one folder (or its contents). Returns True if anything moved."""
+    if not os.path.exists(path):
+        return False
+    # Checked for "contents only" items too: if TEMP pointed at the user
+    # profile, emptying it would take the whole profile.
+    if is_protected(path) and not (system_junk and contents_only and _allowed_system_junk(path)):
+        res.failed.append((path, "Protected system folder. Skipped."))
+        return False
+    if contents_only:
+        try:
+            children = list(os.scandir(path))
+        except OSError as e:
+            res.failed.append((path, str(e)))
+            return False
+        failures = sum(1 for c in children if _recycle_one(c.path))  # files in use are normal here
+        if failures:
+            res.failed.append((path, f"{failures} item(s) in use were left in place."))
+        return failures < len(children) or not children
+    err = _recycle_one(path)
+    if err:
+        res.failed.append((path, err))
+        return False
+    return True
+
+
 def recycle(items: list[Item], progress=None) -> Result:
+    """Move items to the Recycle Bin (registry keys: back up, then remove).
+    Rows that are locked (in use) are skipped and reported."""
     res = Result()
     for n, item in enumerate(items, 1):
         if progress:
             progress(n, len(items), item)
+        if item.locked:
+            res.failed.append((item.path, item.locked))
+            continue
         if item.kind == "registry":
             err = remove_registry_key(item.path)
             (res.failed.append((item.path, err)) if err else res.moved.append(item.path))
             continue
-        # Checked for "contents only" items too: if TEMP pointed at the user
-        # profile, emptying it would take the whole profile.
-        if is_protected(item.path):
-            res.failed.append((item.path, "Protected system folder. Skipped."))
-            continue
-        if not os.path.exists(item.path):
-            continue
-        if item.extra.get("contents_only"):
-            # Keep the folder (for example Temp); recycle what is inside it.
-            failures = 0
-            try:
-                children = list(os.scandir(item.path))
-            except OSError as e:
-                res.failed.append((item.path, str(e)))
-                continue
-            for c in children:
-                if _recycle_one(c.path):
-                    failures += 1   # files in use are normal in Temp and caches
+        if item.kind == "command":
+            continue   # command-line tools are removed by their own manager (clitools)
+        moved = False
+        for p in item.paths:
+            moved |= _recycle_path(p, bool(item.extra.get("contents_only")), bool(item.extra.get("system_junk")), res)
+        if moved:
             res.moved.append(item.path)
             res.bytes_moved += item.size
-            if failures:
-                res.failed.append((item.path, f"{failures} item(s) in use were left in place."))
-        else:
-            err = _recycle_one(item.path)
-            if err:
-                res.failed.append((item.path, err))
-            else:
-                res.moved.append(item.path)
-                res.bytes_moved += item.size
     return res
 
 
@@ -214,6 +231,17 @@ class IgnoreList:
         self.entries = []
         try:
             self.path.write_text("[]", "utf-8")
+        except OSError:
+            pass
+
+    def active(self) -> list[str]:
+        now = time.time()
+        return [e["path"] for e in self.entries if (e.get("until") or now + 1) > now]
+
+    def remove(self, p: str):
+        self.entries = [e for e in self.entries if self._key(e["path"]) != self._key(p)]
+        try:
+            self.path.write_text(json.dumps(self.entries, indent=1), "utf-8")
         except OSError:
             pass
 

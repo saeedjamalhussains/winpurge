@@ -55,6 +55,10 @@ Name: "{autodesktop}\WinPurge"; Filename: "{app}\WinPurge.exe"; Tasks: desktopic
 [Run]
 Filename: "{app}\WinPurge.exe"; Description: "Start WinPurge"; Flags: nowait postinstall skipifsilent
 
+[UninstallRun]
+; Turn off the uninstall watcher and the right-click menu item before removing files.
+Filename: "{app}\WinPurge.exe"; Parameters: "--remove-integrations"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveIntegrations"
+
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
 
@@ -80,11 +84,12 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if (CurUninstallStep = usPostUninstall) and not UninstallSilent() then
-    if MsgBox('Also remove WinPurge''s settings and logs?' + #13#10#13#10 +
+    if MsgBox('Also remove WinPurge''s settings, cleaning history and logs?' + #13#10#13#10 +
               'Backups of privacy and registry settings are kept either way.', mbConfirmation, MB_YESNO) = IDYES then
     begin
       DeleteFile(ExpandConstant('{userappdata}\WinPurge\settings.json'));
       DeleteFile(ExpandConstant('{userappdata}\WinPurge\ignored.json'));
+      DeleteFile(ExpandConstant('{userappdata}\WinPurge\history.json'));
       DelTree(ExpandConstant('{localappdata}\WinPurge'), True, True, True);
     end;
 end;
