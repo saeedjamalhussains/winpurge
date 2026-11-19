@@ -79,22 +79,3 @@ def complete_setup(settings: dict, chosen: dict[str, bool], project_roots: list[
     settings["project_roots"] = list(project_roots) if perms["scan_projects"] else []
     settings["setup_version"] = SETUP_VERSION
     return settings
-
-
-SAFETY_POINTS = [
-    ("Works offline",
-     "WinPurge never connects to the internet. It sends no data, has no updates or analytics, "
-     "and opens no network ports, so Windows Firewall has nothing to block and needs no rule."),
-    ("Asks before removing anything",
-     "Scans only read. Nothing moves until you tick it and confirm."),
-    ("Uses the Recycle Bin",
-     "Files and folders go to the Recycle Bin, so you can restore them until you empty it. "
-     "Registry settings are backed up to a .reg file first."),
-    ("Leaves Windows alone",
-     "The Windows folder, Program Files, ProgramData, AppData and your user folder themselves "
-     "can never be removed. Windows settings change only when you change them on the Privacy "
-     "page, and the old values are kept so you can restore them."),
-    ("Runs without administrator rights",
-     "Only folders an administrator installed need it. WinPurge asks for it only when you press "
-     "Restart as administrator."),
-]

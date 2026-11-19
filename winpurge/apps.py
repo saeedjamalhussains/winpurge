@@ -117,7 +117,3 @@ def run_uninstaller(app: App) -> int:
     if isinstance(cmd, list):
         return subprocess.call(cmd)
     return subprocess.call(cmd, shell=True)
-
-
-def still_installed(app: App) -> bool:
-    return any(a.key_name == app.key_name and a.norm == app.norm for a in list_installed_apps())

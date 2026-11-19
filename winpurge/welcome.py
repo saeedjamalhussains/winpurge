@@ -10,7 +10,7 @@ from .permissions import PERMISSIONS, complete_setup
 from .theme import px
 from .widgets import Button, Card, ScrollFrame, Toggle, icon_label, label
 
-# Short versions of permissions.SAFETY_POINTS, sized for this column.
+# The safety promises shown on the welcome page.
 POINTS = [
     ("offline", "Works offline", "Never connects to the internet, so there’s nothing to allow in your firewall."),
     ("check", "Asks before it acts", "Scans only read. Nothing changes until you confirm."),

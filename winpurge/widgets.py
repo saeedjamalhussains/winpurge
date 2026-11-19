@@ -306,10 +306,6 @@ class Dropdown(Button):
         if self.on_pick:
             self.on_pick(key)
 
-    def set_value(self, key):
-        self.value = key
-        self.set_text(self._label())
-
 
 # ---------------------------------------------------------------- Search box
 
