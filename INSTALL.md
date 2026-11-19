@@ -6,7 +6,7 @@ WinPurge removes apps completely, clears out junk and puts Windows' privacy sett
 
 ## Install
 
-1. Download **`WinPurge-Setup-0.4.0.exe`**.
+1. Download **`WinPurge-Setup-0.4.1.exe`**.
 2. Double-click it, tick **Add a shortcut to the Desktop** if you want one, and press **Install**.
 3. WinPurge opens when it's done.
 
@@ -81,13 +81,20 @@ A few things need administrator rights: system junk such as Windows Update downl
 To check that your download is the original, compare its SHA-256 with the one published next to the download:
 
 ```powershell
-Get-FileHash .\WinPurge-Setup-0.4.0.exe -Algorithm SHA256
+Get-FileHash .\WinPurge-Setup-0.4.1.exe -Algorithm SHA256
 ```
 
 ---
 
 ## Update
-Run the newer `WinPurge-Setup-<version>.exe`. It replaces the old version and keeps your settings.
+Run the newer `WinPurge-Setup-<version>.exe`. If WinPurge is already installed, Setup's last page says which version, and Setup then:
+
+1. Closes WinPurge and its background watcher.
+2. Removes the old version with its own uninstaller, silently.
+3. Installs the new version fresh.
+4. Turns the uninstall watcher and right-click menu back on, if you had them on.
+
+Your settings, cleaning history, excluded folders and privacy backups are kept. If the old version can't be removed, Setup stops and says so, so the old and new versions never end up mixed.
 
 ## Uninstall
 In WinPurge: **Settings → Uninstall WinPurge**. It turns off the watcher and the right-click menu item, checks they stopped, then starts the uninstaller. You can also use **Settings → Apps → Installed apps → WinPurge → Uninstall**, which turns them off too.

@@ -768,7 +768,9 @@ class Toast:
             text_, fn = action
             Button(b, text=text_, kind="subtle", command=lambda: (fn(), self.hide()), height=28).pack(side="right", padx=(px(12), 0))
         self.card.place(relx=0.5, rely=1.0, y=-px(20), anchor="s")
-        self.card.lift()
+        # Card is a Canvas, whose own lift() raises canvas drawings, not the
+        # widget. Call the general widget version to bring the toast to the front.
+        tk.Misc.lift(self.card)
         self._after = self.host.after(seconds * 1000, self.hide)
 
     def hide(self):

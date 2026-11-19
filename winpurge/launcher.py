@@ -15,7 +15,9 @@ USAGE = """WinPurge
   WinPurge --watch               run the uninstall watcher (started at sign-in when it's on)
   WinPurge --leftovers <data>    review one uninstalled app's leftovers (the watcher uses this)
   WinPurge --clean-reminder      show the "scheduled clean is due" reminder
-  WinPurge --remove-integrations turn off the watcher and right-click menu (the uninstaller uses this)"""
+  WinPurge --remove-integrations turn off the watcher and right-click menu (the uninstaller uses this)
+  WinPurge --restore-integrations watch,menu
+                                 turn them back on after an upgrade (Setup uses this)"""
 
 
 def parse_args(argv: list[str]) -> tuple[str, str | None]:
@@ -27,6 +29,8 @@ def parse_args(argv: list[str]) -> tuple[str, str | None]:
              "--help": "help", "/?": "help", "-h": "help"}
     if a in flags:
         return flags[a], None
+    if a == "--restore-integrations":
+        return "restore", argv[1] if len(argv) > 1 else ""
     if a in ("--uninstall", "--leftovers"):
         return (a[2:], argv[1]) if len(argv) > 1 else ("help", None)
     if not a.startswith("-"):
@@ -49,6 +53,17 @@ def start() -> int:
     if mode == "remove":
         from .shell import remove_integrations
         remove_integrations()
+        return 0
+    if mode == "restore":
+        # After an upgrade: stop any watcher still running from the old copy,
+        # then turn back on what was on, pointing at this copy.
+        from . import shell
+        parts = {p.strip() for p in (value or "").split(",")}
+        shell.stop_watcher()
+        if "menu" in parts:
+            shell.set_context_menu(True)
+        if "watch" in parts:
+            shell.set_watcher(True)
         return 0
     if mode == "help":
         crashlog.show_box("WinPurge", USAGE)
