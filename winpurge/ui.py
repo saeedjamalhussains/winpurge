@@ -15,7 +15,10 @@ from .apps import App, list_installed_apps, run_uninstaller
 from .caches import scan_caches, scan_projects
 from .common import CHECK, IS_WINDOWS, SAFE, Item, human_size
 from .leftovers import find_leftovers, find_orphans, find_registry_leftovers
+from . import crashlog
 from .permissions import allowed, needs_setup
+from .privacy_tab import PrivacyTab
+from .setup_wizard import SetupWizard
 from .trash import IgnoreList, Result, app_data_dir, is_admin, recycle, relaunch_as_admin
 
 BOX_ON, BOX_OFF = "☑", "☐"
@@ -149,6 +152,8 @@ class WinPurgeApp(tk.Tk):
         nb.pack(fill="both", expand=True, padx=8, pady=(8, 0))
         nb.add(self._build_apps_tab(nb), text="  Apps  ")
         nb.add(self._build_clean_tab(nb), text="  Clean Up  ")
+        self.privacy_tab = PrivacyTab(nb, self)
+        nb.add(self.privacy_tab, text="  Privacy  ")
 
         bar = ttk.Frame(self)
         bar.pack(fill="x", padx=8, pady=6)
@@ -163,6 +168,7 @@ class WinPurgeApp(tk.Tk):
             self.after(50, lambda: self.open_setup(first_run=True))
         else:
             self.load_apps()
+            self.privacy_tab.refresh()
 
     # ------------------------------------------------------------ setup
 
@@ -170,12 +176,12 @@ class WinPurgeApp(tk.Tk):
         return allowed(self.settings.data, key)
 
     def open_setup(self, first_run: bool):
-        from .setup_wizard import SetupWizard
 
         def done(_):
             self.settings.save()
             self.clean_list.set_items([])
             self.load_apps()
+            self.privacy_tab.refresh()
 
         def cancel():
             if needs_setup(self.settings.data):
@@ -195,6 +201,7 @@ class WinPurgeApp(tk.Tk):
             try:
                 self.jobs.put((done, work(), None))
             except Exception as e:  # report, don't crash the window
+                crashlog.report(type(e), e, e.__traceback__, where=busy_text)
                 self.jobs.put((done, None, e))
         threading.Thread(target=target, daemon=True).start()
 
@@ -205,7 +212,8 @@ class WinPurgeApp(tk.Tk):
                 self.config(cursor="")
                 if err:
                     self.status.config(text="")
-                    messagebox.showerror("WinPurge", f"Something went wrong:\n{err}")
+                    messagebox.showerror("WinPurge", f"Something went wrong:\n{err}\n\n"
+                                         f"Details are saved in:\n{crashlog.log_path()}")
                 else:
                     done(result)
         except queue.Empty:

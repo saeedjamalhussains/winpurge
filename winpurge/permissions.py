@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-SETUP_VERSION = 1  # bump to show setup again when permissions change meaning
+SETUP_VERSION = 2  # bump to show setup again when permissions change meaning
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,12 @@ PERMISSIONS: list[Permission] = [
         "registry_cleanup", "Offer to remove an app's registry settings",
         "After an uninstall, offers the app's own keys under HKEY_CURRENT_USER\\Software. "
         "Each key is saved to a .reg backup file first, and is never ticked for you.",
+        False),
+    Permission(
+        "privacy", "Show and change Windows privacy settings",
+        "Shows what diagnostic data, ads, activity history, typing, speech and location settings "
+        "this PC uses, and lets you change them from WinPurge. Nothing changes until you press "
+        "Apply, and your original settings are saved so you can restore them.",
         False),
 ]
 
@@ -86,7 +92,8 @@ SAFETY_POINTS = [
      "Registry settings are backed up to a .reg file first."),
     ("Leaves Windows alone",
      "The Windows folder, Program Files, ProgramData, AppData and your user folder themselves "
-     "can never be removed."),
+     "can never be removed. Windows settings change only when you press Apply on the Privacy "
+     "tab, and the old values are kept so you can restore them."),
     ("Runs without administrator rights",
      "Only folders an administrator installed need it. WinPurge asks for it only when you press "
      "Restart as administrator."),

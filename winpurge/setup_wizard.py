@@ -16,7 +16,7 @@ class SetupWizard(tk.Toplevel):
     def __init__(self, master, settings: dict, on_done, on_cancel):
         super().__init__(master)
         self.title("Set up WinPurge")
-        self.geometry("680x560")
+        self.geometry("700x660")
         self.minsize(600, 500)
         self.resizable(True, True)
         self.transient(master)
